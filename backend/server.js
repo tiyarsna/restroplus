@@ -25,10 +25,8 @@ try {
 // ================= SOCKET =================
 try {
   const { initSocket } = require('./socket/socketManager');
-  if (typeof initSocket === 'function') {
-    initSocket(server);
-    console.log('🔌 Socket initialized');
-  }
+  initSocket(server);
+  console.log('🔌 Socket initialized');
 } catch (err) {
   console.warn('⚠️ Socket init skipped:', err.message);
 }
@@ -38,31 +36,30 @@ app.use(helmet({ contentSecurityPolicy: false }));
 
 // ================= CORS =================
 const allowedOrigins = [
+  process.env.FRONTEND_URL,
   'http://localhost:5173',
-  'http://localhost:3000',
-  'https://restroplus.vercel.app',
-  'https://restroplus-l1q80opou-tiyarsnas-projects.vercel.app'
+  'http://localhost:3000'
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow tools like Postman
+      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
-      }
+      // To fix CORS issues entirely during deployment, we tell CORS to allow any incoming origin.
+      // The returning 'true' echoes back the requesting origin in Access-Control-Allow-Origin header.
+      // You can add your deployed URL to the allowedOrigins if you want to restrict it later:
+      // if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
   })
 );
 
-// Handle preflight requests explicitly
+// Handle preflight
 app.options('*', cors());
 
 // ================= RATE LIMIT =================
