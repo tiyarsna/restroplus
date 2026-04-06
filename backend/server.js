@@ -7,128 +7,111 @@ const dotenv = require('dotenv');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 
-// Load env
+// Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
-
-console.log('🔧 Starting RestroPulse...');
-console.log('🗄️ MongoDB URI:', process.env.MONGODB_URI ? '✅ Found' : '❌ MISSING');
-console.log('🔑 JWT Secret:', process.env.JWT_SECRET ? '✅ Found' : '❌ MISSING');
-
-// DB connection
-const connectDB = require('./config/database');
-connectDB();
 
 const app = express();
 const server = http.createServer(app);
 
-// ================= SOCKET.IO =================
+// ================= DATABASE =================
+try {
+  const connectDB = require('./config/database');
+  connectDB();
+  console.log('🗄️ Database connected');
+} catch (err) {
+  console.error('❌ DB connection failed:', err.message);
+}
+
+// ================= SOCKET =================
 try {
   const { initSocket } = require('./socket/socketManager');
   if (typeof initSocket === 'function') {
     initSocket(server);
-    console.log('🔌 Socket.IO initialized');
+    console.log('🔌 Socket initialized');
   }
 } catch (err) {
-  console.warn('⚠️ Socket.IO init failed:', err.message);
+  console.warn('⚠️ Socket init skipped:', err.message);
 }
 
-// ================= MIDDLEWARE =================
+// ================= SECURITY =================
+app.use(helmet({ contentSecurityPolicy: false }));
 
-// Security headers
-app.use(
-  helmet({
-    contentSecurityPolicy: false
-  })
-);
+// ================= CORS =================
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://restroplus.vercel.app'
+];
 
-// CORS
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      process.env.FRONTEND_URL
-    ].filter(Boolean),
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, true); // allow all in case of issues
+    },
+    credentials: true
   })
 );
 
-// Rate limiting
+// Preflight requests
+app.options('*', cors());
+
+// ================= RATE LIMIT =================
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 500,
-    skip: () => process.env.NODE_ENV === 'development'
+    max: 500
   })
 );
 
-// Body parser
+// ================= BODY PARSER =================
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Logger
+// ================= LOGGER =================
 app.use(morgan('dev'));
 
 // ================= ROUTES =================
+try {
+  app.use('/api/auth', require('./routes/auth'));
+  app.use('/api/restaurants', require('./routes/restaurants'));
+  app.use('/api/menu', require('./routes/menu'));
+  app.use('/api/orders', require('./routes/orders'));
+  app.use('/api/billing', require('./routes/billing'));
+  app.use('/api/expenses', require('./routes/expenses'));
+  app.use('/api/waste', require('./routes/waste'));
+  app.use('/api/staff', require('./routes/staff'));
+  app.use('/api/tables', require('./routes/tables'));
+  app.use('/api/subscriptions', require('./routes/subscriptions'));
+  app.use('/api/superadmin', require('./routes/superadmin'));
+  app.use('/api/savebite', require('./routes/savebite'));
+} catch (err) {
+  console.error('❌ Route loading error:', err.message);
+}
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/restaurants', require('./routes/restaurants'));
-app.use('/api/menu', require('./routes/menu'));
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/billing', require('./routes/billing'));
-app.use('/api/expenses', require('./routes/expenses'));
-app.use('/api/waste', require('./routes/waste'));
-app.use('/api/staff', require('./routes/staff'));
-app.use('/api/tables', require('./routes/tables'));
-app.use('/api/subscriptions', require('./routes/subscriptions'));
-app.use('/api/superadmin', require('./routes/superadmin'));
-app.use('/api/savebite', require('./routes/savebite'));
-
-// ================= HEALTH CHECK =================
-
+// ================= HEALTH =================
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString()
-  });
+  res.json({ status: 'OK' });
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: 'RestroPulse API running 🚀' });
+  res.send('RestroPulse API running 🚀');
 });
 
-// ================= 404 HANDLER =================
-
-app.use((req, res) => {
-  res.status(404).json({
-    error: `Not found: ${req.method} ${req.path}`
-  });
-});
-
-// ================= GLOBAL ERROR HANDLER =================
-
+// ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack || err.message);
-
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error'
-  });
+  console.error('❌ Error:', err.message);
+  res.status(500).json({ error: 'Server error' });
 });
 
 // ================= START SERVER =================
-
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log('\n=====================================');
-  console.log('🚀 RestroPulse running on port', PORT);
-  console.log(
-    '🌐 Health Check:',
-    `https://restropulse-backend.onrender.com/health`
-  );
-  console.log('=====================================\n');
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 module.exports = { app, server };
