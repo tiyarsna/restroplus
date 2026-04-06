@@ -1,7 +1,10 @@
 import axios from 'axios'
 
-// ✅ Always use backend base URL (NO /api here)
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://restroplus.onrender.com'
+// We ensure the base URL always points to the '/api' endpoints
+let BASE_URL = import.meta.env.VITE_API_URL || 'https://restroplus.onrender.com'
+if (!BASE_URL.endsWith('/api')) {
+  BASE_URL = BASE_URL.replace(/\/$/, '') + '/api'
+}
 
 const api = axios.create({
   baseURL: BASE_URL,
