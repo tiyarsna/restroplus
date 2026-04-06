@@ -7,7 +7,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 
-// Load environment variables
+// Load env
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
@@ -40,23 +40,29 @@ app.use(helmet({ contentSecurityPolicy: false }));
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://restroplus.vercel.app'
+  'https://restroplus.vercel.app',
+  'https://restroplus-l1q80opou-tiyarsnas-projects.vercel.app'
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
+      // allow tools like Postman
       if (!origin) return callback(null, true);
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
+      } else {
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
       }
-      return callback(null, true); // allow all in case of issues
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   })
 );
 
-// Preflight requests
+// Handle preflight requests explicitly
 app.options('*', cors());
 
 // ================= RATE LIMIT =================
