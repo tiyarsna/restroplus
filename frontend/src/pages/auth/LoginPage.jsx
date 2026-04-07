@@ -128,6 +128,7 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="Email"
+              autoComplete="off"
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
               className="w-full px-4 py-3 bg-[#0f172a]/70 border border-white/10 rounded-xl 
@@ -138,6 +139,7 @@ export default function LoginPage() {
             <input
               type="password"
               placeholder="Password"
+              autoComplete="new-password"
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               className="w-full px-4 py-3 bg-[#0f172a]/70 border border-white/10 rounded-xl 
