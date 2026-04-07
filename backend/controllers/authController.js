@@ -32,11 +32,16 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Please provide email and password.' });
+    const { email, password, role } = req.body;
+    if (!email || !password || !role) return res.status(400).json({ error: 'Please provide email, password, and role.' });
 
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) return res.status(401).json({ error: 'No account found with this email.' });
+    
+    if (user.role !== role) {
+      return res.status(403).json({ error: `Access denied. Invalid role for this user. Expected ${user.role}.` });
+    }
+
     if (!(await user.comparePassword(password))) return res.status(401).json({ error: 'Incorrect password.' });
     if (!user.isActive) return res.status(401).json({ error: 'Account deactivated. Contact admin.' });
 

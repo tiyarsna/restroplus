@@ -9,7 +9,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { loading = false, error = null } = useSelector(s => s.auth || {})
 
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ email: '', password: '', role: 'RestaurantAdmin' })
 
   useEffect(() => {
     dispatch(clearError())
@@ -111,6 +111,19 @@ export default function LoginPage() {
 
           {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-4">
+
+            <select
+              value={form.role}
+              onChange={e => setForm({ ...form, role: e.target.value })}
+              className="w-full px-4 py-3 bg-[#0f172a]/70 border border-white/10 rounded-xl 
+              text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 
+              outline-none transition-all duration-200 appearance-none"
+            >
+              <option value="RestaurantAdmin">Restaurant Admin</option>
+              <option value="Manager">Manager</option>
+              <option value="Waiter">Waiter</option>
+              <option value="SuperAdmin">Super Admin</option>
+            </select>
 
             <input
               type="email"
