@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
     })));
 
     const user = await User.create({ name: ownerName, email: email.toLowerCase(), phone, password, role: 'RestaurantAdmin', restaurantId: restaurant._id });
-    res.status(201).json({ success: true, token: generateToken(user._id), user: user.toJSON(), restaurant });
+    res.status(201).json({ success: true, token: generateToken(user), user: user.toJSON(), restaurant });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: error.message });
@@ -46,7 +46,7 @@ exports.login = async (req, res) => {
     let restaurant = null;
     if (user.restaurantId) restaurant = await Restaurant.findById(user.restaurantId);
 
-    res.json({ success: true, token: generateToken(user._id), user: user.toJSON(), restaurant });
+    res.json({ success: true, token: generateToken(user), user: user.toJSON(), restaurant });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: error.message });

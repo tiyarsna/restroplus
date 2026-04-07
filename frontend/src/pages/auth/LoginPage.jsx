@@ -4,13 +4,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { login, clearError } from '../../store/slices/authSlice'
 import toast from 'react-hot-toast'
 
-const DEMO_ACCOUNTS = [
-  { label: '🏪 Admin', email: 'owner@jkspicydosa.com', password: 'Admin@123' },
-  { label: '👔 Manager', email: 'manager@jkspicydosa.com', password: 'Staff@123' },
-  { label: '🧑‍🍳 Waiter', email: 'amit@jkspicydosa.com', password: 'Staff@123' },
-  { label: '👑 Super Admin', email: 'superadmin@restropulse.com', password: 'SuperAdmin@123' },
-]
-
 export default function LoginPage() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -115,18 +108,6 @@ export default function LoginPage() {
 
           <h2 className="text-xl font-bold mb-4">Sign In</h2>
 
-          {/* DEMO ACCOUNTS */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            {DEMO_ACCOUNTS.map(acc => (
-              <button
-                key={acc.email}
-                onClick={() => setForm({ email: acc.email, password: acc.password })}
-                className="bg-[#0f172a]/60 text-xs p-2 rounded-lg hover:bg-blue-500/20 hover:scale-105 transition-all duration-200 border border-white/10"
-              >
-                {acc.label}
-              </button>
-            ))}
-          </div>
 
           {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-4">
