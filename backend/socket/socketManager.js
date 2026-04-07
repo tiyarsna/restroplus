@@ -7,10 +7,10 @@ let io;
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: [
-        process.env.FRONTEND_URL,
-        'http://localhost:5173'
-      ],
+      origin: function (origin, callback) {
+        // Echo the requesting origin to solve CORS across all deployed frontend preview domains
+        return callback(null, true);
+      },
       methods: ['GET', 'POST'],
       credentials: true
     }
