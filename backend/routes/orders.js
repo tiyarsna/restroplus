@@ -28,7 +28,8 @@ router.get('/live', async (req, res) => {
   try {
     const orders = await Order.find({
       restaurantId: req.user.restaurantId,
-      status: { $in: ['pending', 'preparing'] }
+      status: { $in: ['pending', 'preparing', 'served'] },
+      isBilled: false
     });
     res.json(orders);
   } catch (err) {
@@ -50,6 +51,16 @@ router.put('/:id', async (req, res) => {
 
     if (!updated) {
       return res.status(404).json({ error: 'Order not found' });
+    }
+
+    try {
+      const { getIO } = require('../socket/socketManager');
+      const io = getIO();
+      if (io) {
+        io.to(`restaurant:${req.user.restaurantId}`).emit('order:update', updated);
+      }
+    } catch (e) {
+      console.warn('Socket emit failed:', e.message);
     }
 
     res.json(updated);
