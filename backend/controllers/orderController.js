@@ -137,13 +137,13 @@ exports.createOrder = async (req, res) => {
     try {
       const io = getIO();
       if (io) {
-        io.to(`restaurant:${restaurantId}`).emit('order:updated', order);
+        io.to(`restaurant:${restaurantId}`).emit('order:new', order);
       }
     } catch(e) {
       console.warn('Socket emit failed:', e.message);
     }
 
-    res.status(201).json({ order, merged: false });
+    res.status(201).json(order);
 
   } catch (err) {
     console.error("CREATE ORDER ERROR:", err);

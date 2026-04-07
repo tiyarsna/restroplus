@@ -140,7 +140,17 @@ const orderSlice = createSlice({
 
       // CREATE ORDER
       .addCase(createOrder.fulfilled, (state, action) => {
-        state.liveOrders.unshift(action.payload)
+        const orderData = action.payload.order || action.payload
+        const isMerged = action.payload.merged
+
+        if (isMerged) {
+          const idx = state.liveOrders.findIndex(o => o._id === orderData._id)
+          if (idx !== -1) {
+            state.liveOrders[idx] = orderData
+          }
+        } else {
+          state.liveOrders.unshift(orderData)
+        }
       })
 
       // UPDATE STATUS

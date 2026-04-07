@@ -28,7 +28,8 @@ export default function BillingPage() {
     try {
       // Load ALL active (served + completed but unbilled) orders
       const { data } = await api.get('/orders', { params: { status: 'served,pending,preparing' } })
-      const unbilled = (data.orders || []).filter(o => !o.isBilled)
+      const orderList = Array.isArray(data) ? data : (data.orders || [])
+      const unbilled = orderList.filter(o => !o.isBilled)
       setOrders(unbilled)
     } catch (e) {
       toast.error('Failed to load orders')

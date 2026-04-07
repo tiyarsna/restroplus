@@ -11,7 +11,11 @@ router.post('/', createOrder);
 // ================= GET ALL ORDERS =================
 router.get('/', async (req, res) => {
   try {
-    const orders = await Order.find({ restaurantId: req.user.restaurantId }).sort({ createdAt: -1 });
+    const filter = { restaurantId: req.user.restaurantId };
+    if (req.query.status) {
+      filter.status = { $in: req.query.status.split(',') };
+    }
+    const orders = await Order.find(filter).sort({ createdAt: -1 });
     res.json(orders);
   } catch (err) {
     console.error(err);
