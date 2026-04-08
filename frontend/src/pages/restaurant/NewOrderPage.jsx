@@ -92,9 +92,9 @@ export default function NewOrderPage() {
         setCart([])
         setOrderInfo({ tableId: '', tableNumber: '', customerName: '', customerPhone: '', notes: '', orderType: 'dine-in' })
         if (merged) {
-          toast.success(`Items added to existing order for Table ${order.tableNumber}!`, { icon: '➕', duration: 4000 })
+          toast.success(`Items added to existing order ${order?.orderNumber ? 'for Table ' + order.tableNumber : ''}!`, { icon: '➕', duration: 4000 })
         } else {
-          toast.success(`Order ${order.orderNumber} sent to kitchen!`, { icon: '🍽️', duration: 4000 })
+          toast.success(`Order ${order?.orderNumber || ''} sent to kitchen!`, { icon: '🍽️', duration: 4000 })
         }
       } else {
         toast.error(result.payload || 'Failed to create order')
@@ -115,8 +115,8 @@ export default function NewOrderPage() {
           <h2 className="text-2xl font-bold text-white mb-2">
             {merged ? 'Items Added to Existing Order!' : 'Order Sent to Kitchen!'}
           </h2>
-          <p className="text-slate-400 mb-1 font-mono text-sm">{order.orderNumber}</p>
-          {order.tableNumber && <p className="text-slate-400 mb-1">Table {order.tableNumber}</p>}
+          <p className="text-slate-400 mb-1 font-mono text-sm">{order?.orderNumber || 'N/A'}</p>
+          {order?.tableNumber && <p className="text-slate-400 mb-1">Table {order.tableNumber}</p>}
           {merged && (
             <p className="text-amber-400 text-xs mb-4 bg-amber-500/10 px-3 py-1.5 rounded-lg inline-block">
               Table was occupied — items merged into existing order

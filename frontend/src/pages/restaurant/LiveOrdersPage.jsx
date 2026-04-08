@@ -43,7 +43,7 @@ export default function LiveOrdersPage() {
 
     socket.on('order:new', (order) => {
       dispatch(addLiveOrder(order))
-      toast.success(`New order: ${order.orderNumber}`, {
+      toast.success(`New order: ${order?.orderNumber || 'N/A'}`, {
         icon: '🔔',
         duration: 4000
       })
@@ -165,7 +165,7 @@ export default function LiveOrdersPage() {
               <div className="flex justify-between">
                 <div>
                   <p className="text-white font-bold">
-                    {order.orderNumber || 'N/A'}
+                    {order?.orderNumber || 'N/A'}
                   </p>
                   <p className="text-sm text-slate-400">
                     {order.tableNumber

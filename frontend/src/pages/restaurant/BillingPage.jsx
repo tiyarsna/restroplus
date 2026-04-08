@@ -169,11 +169,11 @@ export default function BillingPage() {
                             </span>
                           </div>
                           <p className="text-xs text-slate-400">
-                            {order.customerName || 'Guest'} · {order.items?.length} item{order.items?.length !== 1 ? 's' : ''}
+                            {order?.customerName || 'Guest'} · {order?.items?.length} item{order?.items?.length !== 1 ? 's' : ''}
                           </p>
-                          <p className="text-xs text-slate-500 font-mono">{order.orderNumber}</p>
+                          <p className="text-xs text-slate-500 font-mono">{order?.orderNumber || 'N/A'}</p>
                         </div>
-                        <p className="font-bold text-white ml-2 flex-shrink-0">{formatCurrency(order.subtotal)}</p>
+                        <p className="font-bold text-white ml-2 flex-shrink-0">{formatCurrency(order?.subtotal)}</p>
                       </div>
                     </div>
                   ))}
@@ -197,7 +197,7 @@ export default function BillingPage() {
                   <div className="bg-slate-800/50 rounded-xl p-3 text-sm space-y-1.5">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Order#</span>
-                      <span className="font-mono text-xs text-white">{selectedOrder.orderNumber}</span>
+                      <span className="font-mono text-xs text-white">{selectedOrder?.orderNumber || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Table</span>
