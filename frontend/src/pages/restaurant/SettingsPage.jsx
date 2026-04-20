@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { updateSettings } from '../../store/slices/restaurantSlice'
+import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 export default function SettingsPage() {
@@ -19,6 +20,26 @@ export default function SettingsPage() {
     setSaving(false)
     if (updateSettings.fulfilled.match(result)) toast.success('Settings saved!')
     else toast.error('Failed to save settings')
+  }
+
+  const handleResetData = async () => {
+    const confirmation = prompt('DANGER ZONE: Type "RESET" to confirm deletion of ALL Orders and Bills. This cannot be undone!')
+    if (confirmation !== 'RESET') {
+      if (confirmation) toast.error('Invalid confirmation phrase')
+      return;
+    }
+    
+    try {
+      setSaving(true)
+      const { data } = await api.delete('/orders/reset', { data: { confirmation: 'RESET' } })
+      toast.success(data.message || 'Sales data reset successfully!')
+      // Optionally reload the page to refresh stats
+      setTimeout(() => window.location.reload(), 1500)
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to reset sales data')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -92,6 +113,20 @@ export default function SettingsPage() {
       <button onClick={handleSave} disabled={saving} className="btn-primary px-8 py-3 font-semibold">
         {saving ? 'Saving...' : '💾 Save Settings'}
       </button>
+
+      {/* Danger Zone */}
+      <div className="card space-y-4 border border-red-500/30 bg-red-500/5 mt-8">
+        <h3 className="text-sm font-semibold text-red-400 border-b border-red-500/20 pb-3">⚠️ Danger Zone</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-white">Reset All Sales Data</p>
+            <p className="text-xs text-red-300 mt-1">Permanently deletes all orders, bills, and resets revenue counters to zero.</p>
+          </div>
+          <button onClick={handleResetData} disabled={saving} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors">
+            Reset Data
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

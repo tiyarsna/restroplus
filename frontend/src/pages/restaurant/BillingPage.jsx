@@ -104,6 +104,22 @@ export default function BillingPage() {
     }
   }
 
+  const handleDeleteBill = async (billId) => {
+    if (!confirm('Are you sure you want to delete this bill? This will reverse revenue from sales and restore the order back to Active queue.')) return;
+    try {
+      setSubmitting(true)
+      const { data } = await api.delete(`/billing/${billId}`)
+      toast.success(data.message || 'Bill deleted and order restored')
+      setPrintBill(null)
+      loadUnbilledOrders()
+      loadBills()
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to delete bill')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const t = calcTotals()
 
   return (
@@ -435,9 +451,17 @@ export default function BillingPage() {
                 </div>
                 <div className="text-center mt-3 text-xs text-gray-400">Thank you! Visit again 🙏</div>
               </div>
-              <div className="flex gap-3 mt-4">
-                <button onClick={() => window.print()} className="btn-primary flex-1 py-2.5 text-sm">🖨️ Print</button>
-                <button onClick={() => setPrintBill(null)} className="btn-secondary flex-1 py-2.5 text-sm">Close</button>
+              <div className="flex flex-col gap-3 mt-4">
+                <div className="flex gap-3">
+                  <button onClick={() => window.print()} className="btn-primary flex-1 py-2.5 text-sm">🖨️ Print</button>
+                  <button onClick={() => setPrintBill(null)} className="btn-secondary flex-1 py-2.5 text-sm">Close</button>
+                </div>
+                <button 
+                  onClick={() => handleDeleteBill(printBill._id)} 
+                  disabled={submitting}
+                  className="w-full py-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg text-xs font-bold transition-colors">
+                  🗑️ Delete Bill & Restore Order
+                </button>
               </div>
             </div>
           </div>

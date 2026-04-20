@@ -36,6 +36,39 @@ exports.createMenuItem = async (req, res) => {
   }
 };
 
+// @desc Bulk add menu items (from CSV)
+exports.bulkAddMenuItems = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const items = req.body.items || [];
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Please provide an array of items.' });
+    }
+
+    const itemsToInsert = items.map(item => ({
+      ...item,
+      restaurantId,
+      price: Number(item.price) || 0,
+    }));
+
+    const inserted = await MenuItem.insertMany(itemsToInsert);
+
+    try {
+      const { getIO } = require('../socket/socketManager');
+      const io = getIO();
+      if (io) {
+        io.to(`restaurant:${restaurantId}`).emit('menu:bulk_add', inserted);
+      }
+    } catch (e) {
+      console.warn('Socket emit failed:', e.message);
+    }
+
+    res.status(201).json({ success: true, count: inserted.length, items: inserted });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // @desc Update menu item
 exports.updateMenuItem = async (req, res) => {
   try {

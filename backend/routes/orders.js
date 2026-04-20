@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
-const { createOrder } = require('../controllers/orderController');
+const { createOrder, resetSalesData } = require('../controllers/orderController');
 const Order = require('../models/Order');
 
 // ================= CREATE ORDER =================
 router.use(protect);
 router.post('/', createOrder);
+router.delete('/reset', resetSalesData);
 
 // ================= GET ALL ORDERS =================
 router.get('/', async (req, res) => {

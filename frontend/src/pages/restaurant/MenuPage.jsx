@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchMenu, createMenuItem, updateMenuItem, deleteMenuItem, toggleAvailability } from '../../store/slices/menuSlice'
 import { formatCurrency } from '../../utils/helpers'
+import api from '../../utils/api'
+import Papa from 'papaparse'
 import toast from 'react-hot-toast'
 
 const DEFAULT_CATEGORIES = ['Starters', 'Main Course', 'Desserts', 'Beverages']
@@ -44,6 +46,39 @@ export default function MenuPage() {
     }
   }
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const items = results.data.map(row => ({
+            name: row.name || 'Unnamed Item',
+            category: row.category || 'General',
+            price: Number(row.price) || 0,
+            description: row.description || '',
+            isVeg: String(row.isVeg).toLowerCase() === 'true',
+            preparationTime: Number(row.preparationTime) || 10,
+            isAvailable: true
+          }))
+
+          if (items.length === 0) return toast.error('No valid valid found in CSV')
+
+          const { data } = await api.post('/menu/bulk', { items })
+          toast.success(`${data.count} items uploaded successfully!`)
+          dispatch(fetchMenu()) // Reload
+        } catch (error) {
+          toast.error('Failed to upload menu items')
+        }
+      },
+      error: () => toast.error('Error parsing CSV file')
+    })
+    e.target.value = '' // Reset input
+  }
+
   const handleDelete = async (id) => {
     if (!confirm('Delete this item?')) return
     await dispatch(deleteMenuItem(id))
@@ -71,7 +106,13 @@ export default function MenuPage() {
           <h1 className="text-2xl font-bold text-white">Menu Management</h1>
           <p className="text-slate-400 text-sm mt-0.5">{items.length} items across {categories.length} categories</p>
         </div>
-        <button onClick={openCreate} className="btn-primary text-sm">+ Add Item</button>
+        <div className="flex gap-3">
+          <label className="btn-secondary text-sm cursor-pointer border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors px-4 py-2 rounded-xl font-medium">
+            📁 Import CSV
+            <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+          </label>
+          <button onClick={openCreate} className="btn-primary text-sm">+ Add Item</button>
+        </div>
       </div>
 
       {/* Filters */}

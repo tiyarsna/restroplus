@@ -150,3 +150,43 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Reset all sales data for the restaurant
+exports.resetSalesData = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const { confirmation } = req.body;
+
+    if (confirmation !== 'RESET') {
+      return res.status(400).json({ error: 'Invalid confirmation string' });
+    }
+
+    const { Bill } = require('../models/index');
+    const Restaurant = require('../models/Restaurant');
+    const Order = require('../models/Order');
+
+    // Delete all orders and bills for this restaurant
+    await Order.deleteMany({ restaurantId });
+    await Bill.deleteMany({ restaurantId });
+
+    // Reset restaurant revenues
+    await Restaurant.findByIdAndUpdate(restaurantId, {
+      totalRevenue: 0,
+      totalOrders: 0
+    });
+
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(`restaurant:${restaurantId}`).emit('sales:reset');
+      }
+    } catch(e) {
+      console.warn('Socket emit failed:', e.message);
+    }
+
+    res.json({ success: true, message: 'All sales data has been successfully reset.' });
+  } catch (err) {
+    console.error("RESET SALES DATA ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

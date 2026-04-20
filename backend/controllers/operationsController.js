@@ -152,6 +152,47 @@ exports.getBillById = async (req, res) => {
   }
 };
 
+exports.deleteBill = async (req, res) => {
+  try {
+    const restaurantId = req.user.restaurantId;
+    const bill = await Bill.findOneAndDelete({ _id: req.params.id, restaurantId });
+    if (!bill) return res.status(404).json({ error: 'Bill not found.' });
+
+    // Reverse payment totals in restaurant
+    await Restaurant.findByIdAndUpdate(restaurantId, {
+      $inc: { totalRevenue: -bill.totalAmount, totalOrders: -1 }
+    });
+
+    // Revert the order's status to unbilled/served
+    if (bill.orderId) {
+      await Order.findByIdAndUpdate(bill.orderId, {
+        isBilled: false,
+        billedAt: null,
+        status: 'served',
+        gstAmount: 0,
+        discountType: 'fixed',
+        discountValue: 0,
+        discountAmount: 0,
+        totalAmount: 0
+      });
+    }
+
+    try {
+      const { getIO } = require('../socket/socketManager');
+      const io = getIO();
+      if (io) {
+        io.to(`restaurant:${restaurantId}`).emit('billing:deleted', { billId: bill._id, orderId: bill.orderId });
+      }
+    } catch (e) {
+      console.warn('Socket emit error', e);
+    }
+
+    res.json({ success: true, message: 'Bill deleted and order restored.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // ==================== WASTE ====================
 exports.createWasteLog = async (req, res) => {
   try {
