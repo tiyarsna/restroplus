@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchMenu, createMenuItem, updateMenuItem, deleteMenuItem, toggleAvailability } from '../../store/slices/menuSlice'
 import { formatCurrency } from '../../utils/helpers'
 import toast from 'react-hot-toast'
 
-const CATEGORIES = ['Paper Dosa', 'Nylon Dosa', 'Gravy Item', 'Fancy Dosa', 'Extras']
+const DEFAULT_CATEGORIES = ['Starters', 'Main Course', 'Desserts', 'Beverages']
 
-const emptyForm = { name: '', category: 'Fancy Dosa', price: '', description: '', isVeg: true, preparationTime: 10, tags: '' }
+const emptyForm = { name: '', category: '', price: '', description: '', isVeg: true, preparationTime: 10, tags: '' }
 
 export default function MenuPage() {
   const dispatch = useDispatch()
@@ -60,7 +60,9 @@ export default function MenuPage() {
     return catMatch && searchMatch
   })
 
-  const allCategories = [...new Set([...CATEGORIES, ...categories])]
+  const allCategories = useMemo(() => {
+    return [...new Set([...DEFAULT_CATEGORIES, ...categories, ...items.map(i => i.category)])].filter(Boolean)
+  }, [categories, items])
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -146,11 +148,19 @@ export default function MenuPage() {
                 <input className="input" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Masala Dosa" />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="relative">
                   <label className="label">Category *</label>
-                  <select className="select" value={form.category} onChange={e => set('category', e.target.value)}>
-                    {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <input 
+                    className="input" 
+                    required 
+                    list="category-options"
+                    value={form.category} 
+                    onChange={e => set('category', e.target.value)} 
+                    placeholder="e.g. Pizza" 
+                  />
+                  <datalist id="category-options">
+                    {allCategories.map(c => <option key={c} value={c} />)}
+                  </datalist>
                 </div>
                 <div>
                   <label className="label">Price (₹) *</label>

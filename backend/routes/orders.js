@@ -73,21 +73,45 @@ router.put('/:id', async (req, res) => {
 // ================= ANALYTICS =================
 router.get('/analytics', async (req, res) => {
   try {
-    const orders = await Order.find({ restaurantId: req.user.restaurantId });
+    const period = req.query.period || '30d';
+    const days = parseInt(period) || 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-    const totalRevenue = orders.reduce(
-      (sum, o) => sum + (o.totalAmount || 0),
-      0
-    );
+    // Get all orders in the requested timeframe
+    const orders = await Order.find({ 
+      restaurantId: req.user.restaurantId,
+      createdAt: { $gte: startDate }
+    });
 
+    // Calculate totals (only count completed or billed orders towards revenue to be safe, but totalAmount historically used here)
+    const validOrders = orders.filter(o => o.status === 'completed' || o.isBilled);
+    const totalRevenue = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const totalOrders = orders.length;
+    const completedOrders = validOrders.length;
 
-    const completedOrders = orders.filter(
-      (o) => o.status === 'completed'
-    ).length;
+    // Daily aggregation for the charts
+    const aggregatePipeline = [
+      {
+        $match: {
+          restaurantId: req.user.restaurantId,
+          createdAt: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          totalRevenue: { $sum: "$totalAmount" },
+          orderCount: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ];
+
+    const analytics = await Order.aggregate(aggregatePipeline);
 
     res.json({
-      analytics: {},
+      analytics, 
       totals: {
         totalRevenue,
         totalOrders,

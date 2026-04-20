@@ -157,10 +157,10 @@ export default function NewOrderPage() {
         )}
       </div>
 
-      <div className="flex gap-4" style={{ height: 'calc(100vh - 140px)' }}>
+      <div className="flex flex-col lg:flex-row gap-4 h-auto lg:h-[calc(100vh-140px)] pb-10 lg:pb-0">
 
         {/* LEFT — Menu */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 lg:overflow-hidden min-h-[400px]">
           <div className="mb-3 space-y-2">
             <input className="input" placeholder="Search menu items..."
               value={search} onChange={e => setSearch(e.target.value)} />
@@ -177,7 +177,7 @@ export default function NewOrderPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-1">
+          <div className="flex-1 lg:overflow-y-auto pr-1 pb-4 lg:pb-0">
             {loading ? (
               <div className="grid grid-cols-2 gap-3">
                 {[1,2,3,4,5,6].map(i => <div key={i} className="card h-24 animate-pulse bg-slate-700/30" />)}
@@ -218,7 +218,7 @@ export default function NewOrderPage() {
         </div>
 
         {/* RIGHT — Cart + Order Info */}
-        <div className="w-80 flex-shrink-0 flex flex-col gap-3 overflow-y-auto">
+        <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-3 lg:overflow-y-auto pb-6 lg:pb-0 pt-4 lg:pt-0 border-t border-slate-700 lg:border-none">
 
           {/* Order type + table */}
           <div className="card">
