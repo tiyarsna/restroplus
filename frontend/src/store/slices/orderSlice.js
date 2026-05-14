@@ -53,6 +53,19 @@ export const updateOrderStatus = createAsyncThunk(
   }
 )
 
+// ================= UPDATE ORDER ITEM STATUS =================
+export const updateOrderItemStatus = createAsyncThunk(
+  'orders/updateOrderItemStatus',
+  async ({ orderId, itemId, status }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.patch(`/orders/${orderId}/items/${itemId}`, { status })
+      return data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.error || err.message)
+    }
+  }
+)
+
 // ================= FETCH ANALYTICS =================
 export const fetchAnalytics = createAsyncThunk(
   'orders/fetchAnalytics',
@@ -163,6 +176,16 @@ const orderSlice = createSlice({
           } else {
             state.liveOrders[idx] = action.payload
           }
+        }
+      })
+
+      // UPDATE ITEM STATUS
+      .addCase(updateOrderItemStatus.fulfilled, (state, action) => {
+        const idx = state.liveOrders.findIndex(
+          o => o._id === action.payload._id
+        )
+        if (idx !== -1) {
+          state.liveOrders[idx] = action.payload
         }
       })
 

@@ -6,7 +6,8 @@ const orderItemSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   quantity: { type: Number, required: true, min: 1 },
   notes: { type: String },
-  category: { type: String }
+  category: { type: String },
+  status: { type: String, enum: ['pending', 'ready', 'parcel', 'cancelled'], default: 'pending' }
 });
 
 const orderSchema = new mongoose.Schema(

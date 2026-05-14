@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
-const { createOrder, resetSalesData } = require('../controllers/orderController');
+const { createOrder, resetSalesData, updateOrderItemStatus } = require('../controllers/orderController');
 const Order = require('../models/Order');
 
 // ================= CREATE ORDER =================
@@ -70,6 +70,9 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ================= UPDATE ORDER ITEM STATUS =================
+router.patch('/:id/items/:itemId', updateOrderItemStatus);
 
 // ================= ANALYTICS =================
 router.get('/analytics', async (req, res) => {

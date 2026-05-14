@@ -5,7 +5,8 @@ import {
   fetchLiveOrders,
   updateOrderStatus,
   addLiveOrder,
-  updateLiveOrder
+  updateLiveOrder,
+  updateOrderItemStatus
 } from '../../store/slices/orderSlice'
 import { getSocket } from '../../utils/socket'
 import { formatCurrency, timeAgo } from '../../utils/helpers'
@@ -82,6 +83,15 @@ export default function LiveOrdersPage() {
       } else {
         toast.success(`Order ${next}`)
       }
+    }
+  }
+
+  const handleItemStatusUpdate = async (orderId, itemId, status) => {
+    const result = await dispatch(updateOrderItemStatus({ orderId, itemId, status }))
+    if (updateOrderItemStatus.fulfilled.match(result)) {
+      toast.success(`Item marked as ${status}`)
+    } else {
+      toast.error('Failed to update item status')
     }
   }
 
@@ -179,15 +189,34 @@ export default function LiveOrdersPage() {
                 </span>
               </div>
 
-              <div className="mt-3 space-y-1">
+              <div className="mt-3 space-y-2">
                 {(order.items || []).map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span>
-                      {item.quantity}× {item.name}
-                    </span>
-                    <span>
-                      {formatCurrency(item.price * item.quantity)}
-                    </span>
+                  <div key={item._id || i} className="flex flex-col bg-slate-800/50 p-2 rounded-lg gap-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium text-white flex items-center gap-2">
+                        {item.quantity}× {item.name}
+                        {item.status && item.status !== 'pending' && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                            item.status === 'ready' ? 'bg-green-500/20 text-green-400' :
+                            item.status === 'parcel' ? 'bg-blue-500/20 text-blue-400' :
+                            'bg-red-500/20 text-red-400'
+                          }`}>
+                            {item.status.toUpperCase()}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-slate-400">
+                        {formatCurrency(item.price * item.quantity)}
+                      </span>
+                    </div>
+                    {/* Item Action Buttons */}
+                    {(!item.status || item.status === 'pending') && order.status !== 'completed' && order.status !== 'cancelled' && (
+                      <div className="flex gap-1">
+                        <button onClick={() => handleItemStatusUpdate(order._id, item._id, 'ready')} className="text-xs bg-green-500/10 hover:bg-green-500/20 text-green-400 px-2 py-1 rounded transition-colors">✅ Ready</button>
+                        <button onClick={() => handleItemStatusUpdate(order._id, item._id, 'parcel')} className="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 px-2 py-1 rounded transition-colors">📦 Parcel</button>
+                        <button onClick={() => handleItemStatusUpdate(order._id, item._id, 'cancelled')} className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-2 py-1 rounded transition-colors">❌ Cancel</button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -207,7 +236,9 @@ export default function LiveOrdersPage() {
                     onClick={() =>
                       handleStatusUpdate(order._id, order.status)
                     }
-                    className="btn-primary flex-1 text-xs"
+                    disabled={!(order.items || []).every(item => ['ready', 'parcel', 'cancelled'].includes(item.status))}
+                    className="btn-primary flex-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={!(order.items || []).every(item => ['ready', 'parcel', 'cancelled'].includes(item.status)) ? "Mark all items ready/parcel/cancel first" : ""}
                   >
                     {STATUS_LABELS[order.status]}
                   </button>

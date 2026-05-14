@@ -190,3 +190,51 @@ exports.resetSalesData = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Update an individual order item's status
+exports.updateOrderItemStatus = async (req, res) => {
+  try {
+    const { id, itemId } = req.params;
+    const { status } = req.body;
+    const restaurantId = req.user.restaurantId;
+
+    if (!['pending', 'ready', 'parcel', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid item status' });
+    }
+
+    const order = await Order.findOne({ _id: id, restaurantId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const item = order.items.id(itemId);
+    if (!item) return res.status(404).json({ error: 'Item not found in order' });
+
+    item.status = status;
+
+    // Check if all items are resolved
+    const allResolved = order.items.every(i => ['ready', 'parcel', 'cancelled'].includes(i.status));
+    
+    // Automatically transition to 'served' or similar logic if needed, but let's keep it simple: 
+    // frontend handles showing "Complete & Bill". But we can automatically mark order as 'served' if all items are handled and it was 'pending'/'preparing'.
+    if (allResolved && ['pending', 'preparing'].includes(order.status)) {
+      order.status = 'served';
+    } else if (!allResolved && order.status === 'served') {
+      order.status = 'preparing'; // Revert if an item becomes pending again
+    }
+
+    await order.save();
+
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(`restaurant:${restaurantId}`).emit('order:update', order);
+      }
+    } catch(e) {
+      console.warn('Socket emit failed:', e.message);
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error("UPDATE ITEM STATUS ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -316,6 +316,21 @@ exports.createExpense = async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 };
 
+exports.updateExpense = async (req, res) => {
+  try {
+    const expense = await Expense.findOneAndUpdate(
+      { _id: req.params.id, restaurantId: req.user.restaurantId },
+      {
+        ...req.body,
+        ...(req.body.amount && { amount: Math.round(Number(req.body.amount) * 100) / 100 })
+      },
+      { new: true }
+    );
+    if (!expense) return res.status(404).json({ error: 'Expense not found.' });
+    res.json({ success: true, expense });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+};
+
 exports.getExpenses = async (req, res) => {
   try {
     const restaurantId = req.user.restaurantId;
