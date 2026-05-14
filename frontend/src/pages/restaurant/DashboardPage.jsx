@@ -84,7 +84,8 @@ export default function DashboardPage() {
   ).length
 
   // ✅ 🔥 FIXED CHART DATA
-  const chartData = (analytics?.analytics || []).map(d => ({
+  const rawAnalytics = Array.isArray(analytics) ? analytics : (analytics?.analytics || [])
+  const chartData = rawAnalytics.map(d => ({
     date: d._id?.slice(5),
     revenue: Math.round((d.totalRevenue || 0) * 100) / 100,
     orders: d.orderCount || 0,
