@@ -210,6 +210,33 @@ exports.updateOrderItemStatus = async (req, res) => {
 
     item.status = status;
 
+    // Recalculate totals
+    let newSubtotal = 0;
+    order.items.forEach(i => {
+      if (i.status !== 'cancelled') {
+        newSubtotal += (i.price * i.quantity);
+      }
+    });
+
+    order.subtotal = Math.round(newSubtotal * 100) / 100;
+
+    // For totalAmount, we might just set it to subtotal minus any order-level discounts + gst.
+    // If the order has complex discount/gst logic already applied, we can approximate:
+    // Actually, usually totalAmount is calculated at billing. Before billing, it's just subtotal - discount + gst.
+    // Let's re-calculate it simply:
+    let discountAmount = order.discountAmount || 0;
+    if (order.discountType === 'percentage') {
+      discountAmount = (order.subtotal * (order.discountValue || 0)) / 100;
+    } else if (order.discountType === 'fixed') {
+      discountAmount = order.discountValue || 0;
+    }
+    discountAmount = Math.round(discountAmount * 100) / 100;
+    
+    // Gst is also recalculated at billing typically, but let's just do subtotal - discount for now
+    // If gstAmount is present, it will be added.
+    order.totalAmount = Math.max(0, order.subtotal - discountAmount + (order.gstAmount || 0));
+    order.totalAmount = Math.round(order.totalAmount * 100) / 100;
+
     // Check if all items are resolved
     const allResolved = order.items.every(i => ['ready', 'parcel', 'cancelled'].includes(i.status));
     

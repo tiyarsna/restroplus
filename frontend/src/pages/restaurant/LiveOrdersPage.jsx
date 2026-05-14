@@ -71,18 +71,19 @@ export default function LiveOrdersPage() {
   }, [dispatch])
 
   const handleStatusUpdate = async (orderId, currentStatus) => {
+    if (currentStatus === 'served') {
+      // Just redirect to billing section, do not mark as completed
+      navigate('/billing')
+      return
+    }
+
     const next = STATUS_FLOW[currentStatus]
     if (!next) return
 
     const result = await dispatch(updateOrderStatus({ id: orderId, status: next }))
 
     if (updateOrderStatus.fulfilled.match(result)) {
-      if (next === 'completed') {
-        toast.success('Order completed! Go to Billing.')
-        navigate('/billing')
-      } else {
-        toast.success(`Order ${next}`)
-      }
+      toast.success(`Order ${next}`)
     }
   }
 

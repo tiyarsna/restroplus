@@ -340,7 +340,7 @@ exports.getExpenses = async (req, res) => {
     if (month && year) {
       filter.date = { $gte: new Date(year, month-1, 1), $lt: new Date(year, month, 1) };
     }
-    if (category) filter.category = category;
+    if (category && category !== 'all') filter.category = category;
 
     const [expenses, totalByCategory, totalAmount] = await Promise.all([
       Expense.find(filter).sort({ date: -1 }).limit(Number(limit)).skip((Number(page)-1)*Number(limit)),
